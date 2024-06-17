@@ -79,19 +79,35 @@ usb_msg()
 	echo "[$(date +"%F %T")] $@"
 }
 
+# Based on <<Rockchip_Developer_Guide_USB_CN>> V2.0.0
 usb_pid()
 {
 	case "$(echo $USB_FUNCS | xargs -n 1 | sort | xargs | tr ' ' '-')" in
-		ums)		echo 0x0000;;
-		mtp)		echo 0x0001;;
-		uvc)		echo 0x0005;;
-		adb)		echo 0x0006;;
-		adb-mtp)	echo 0x0011;;
-		adb-ums)	echo 0x0018;;
-		adb-uvc)	echo 0x0015;;
-		ntb-uvc)	echo 0x0017;;
-		acm)		echo 0x1005;;
-		*)		echo 0x0019;;
+		ums)			echo 0x0000;;
+		mtp)			echo 0x0001;; # For Android
+		ptp)			echo 0x0002;; # For Android
+		rndis)			echo 0x0003;;
+		midi)			echo 0x0004;; # For Android
+		uvc)			echo 0x0005;; # For Android
+		adb)			echo 0x0006;; # Single ADB
+		# mtp)			echo 0x0007;; # For Android
+		# ptp)			echo 0x0008;; # For Android
+		ntb)			echo 0x0009;; # For next Computing-Stick
+		# ums)			echo 0x0010;; # For U-Boot
+		# adb-ums)		echo 0x0010;; # Out-dated
+		adb-mtp)		echo 0x0011;;
+		# adb-ptp)		echo 0x0012;; # For Android
+		adb-rndis)		echo 0x0013;; # For Android
+		adb-midi)		echo 0x0014;; # For Android
+		adb-uvc)		echo 0x0015;; # For Android
+		adb-uac[12]-uvc|adb-uvc-rndis)	echo 0x0016;;
+		# adb-mtp)		echo 0x0017;; # For Android
+		adb-ums)		echo 0x0018;;
+		# adb-ptp)		echo 0x0018;; # For Android
+		# ntb)			echo 0x0018;; # For Computing-Stick
+		# hid-ntb|ntb-rndis)	echo 0x0019;; # For next Computing-Stick
+		adb-*|*-adb|*-adb-*)	echo 0x0012;; # Undefined composite ADB
+		*)			echo 0x00ff;; # Undefined
 	esac
 }
 
