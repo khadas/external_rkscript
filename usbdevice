@@ -418,16 +418,16 @@ uvc_prepare()
 
 		usb_try_write -ne guidFormat "\\x48\\x32\\x36\\x34\\x00\\x00\\x10\\x00\\x80\\x00\\x00\\xaa\\x00\\x38\\x9b\\x71"
 	fi
-}
 
-uvc_prepare()
-{
-	usb_start_daemon /usr/bin/uvcd
+	# Start your UVC daemon
+	# usb_start_daemon /usr/bin/uvcd
 }
 
 uvc_stop()
 {
-	usb_stop_daemon /usr/bin/uvcd
+	# Stop your UVC daemon
+	# usb_stop_daemon /usr/bin/uvcd
+	true
 }
 
 # ---- hid
@@ -661,7 +661,7 @@ usb_stop()
 
 	# Keep ffs instances registered and mounted, to avoid random crashes
 	find $USB_FUNCTIONS_DIR -mindepth 1 -maxdepth 1 ! -name 'ffs.*' | \
-		xargs rmdir
+		xargs rmdir 2>/dev/null || true
 
 	# Clear functions to avoid stopping them again
 	unset OLD_FUNCS
