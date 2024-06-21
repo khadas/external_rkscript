@@ -411,14 +411,13 @@ uvc_prepare()
 	usb_symlink $UVC_DIR/streaming/header/h $UVC_DIR/streaming/class/ss/h
 
 	# Start your UVC daemon
-	# usb_start_daemon /usr/bin/uvcd
+	usb_start_daemon /usr/bin/uvc-gadget
 }
 
 uvc_stop()
 {
 	# Stop your UVC daemon
-	# usb_stop_daemon /usr/bin/uvcd
-	true
+	usb_stop_daemon /usr/bin/uvc-gadget
 }
 
 # ---- hid
