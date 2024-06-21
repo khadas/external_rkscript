@@ -162,12 +162,8 @@ usb_umount()
 usb_symlink()
 {
 	mkdir -p $1
+	mkdir -p $(dirname $2)
 	[ -e $2 ] || ln -s $1 $2
-}
-
-usb_try_symlink()
-{
-	usb_symlink $@ >/dev/null 2>/dev/null || true
 }
 
 usb_write()
@@ -190,11 +186,6 @@ usb_write()
 	fi
 
 	echo $OPTS $@ > "$FILE"
-}
-
-usb_try_write()
-{
-	usb_write $@ >/dev/null 2>/dev/null || true
 }
 
 usb_start_daemon()
@@ -315,7 +306,7 @@ uvc_add_yuyv()
 {
 	WIDTH=$(echo $1 | cut -d'x' -f1)
 	HEIGHT=$(echo $1 | cut -d'x' -f2)
-	DIR=${HEIGHT}p
+	DIR=streaming/uncompressed/u/${HEIGHT}p
 
 	[ ! -d $DIR ] || return 0
 
@@ -333,7 +324,7 @@ uvc_add_mjpeg()
 {
 	WIDTH=$(echo $1 | cut -d'x' -f1)
 	HEIGHT=$(echo $1 | cut -d'x' -f2)
-	DIR=${HEIGHT}p
+	DIR=streaming/mjpeg/m/${HEIGHT}p
 
 	[ ! -d $DIR ] || return 0
 
@@ -351,7 +342,7 @@ uvc_add_h264()
 {
 	WIDTH=$(echo $1 | cut -d'x' -f1)
 	HEIGHT=$(echo $1 | cut -d'x' -f2)
-	DIR=${HEIGHT}p
+	DIR=streaming/framebased/f/${HEIGHT}p
 
 	[ ! -d $DIR ] || return 0
 
@@ -377,47 +368,47 @@ uvc_prepare()
 {
 	UVC_DIR=$(pwd)
 
+	UVC_YUYV_RES=$(uvc_support_resolutions yuyv)
+	if [ -n "$UVC_YUYV_RES" ]; then
+		for res in $UVC_YUYV_RES; do
+			uvc_add_yuyv $res
+		done
+
+		usb_symlink $UVC_DIR/streaming/uncompressed/u \
+			$UVC_DIR/streaming/header/h/u
+	fi
+
+	UVC_MJPEG_RES=$(uvc_support_resolutions mjpeg)
+	if [ -n "$UVC_MJPEG_RES" ]; then
+		for res in $UVC_MJPEG_RES; do
+			uvc_add_mjpeg $res
+		done
+
+		usb_symlink $UVC_DIR/streaming/mjpeg/m \
+			$UVC_DIR/streaming/header/h/m
+	fi
+
+	UVC_H264_RES=$(uvc_support_resolutions h264)
+	if [ -n "$UVC_H264_RES" ]; then
+		for res in $UVC_H264_RES; do
+			uvc_add_h264 $res
+		done
+
+		usb_write -ne $UVC_DIR/streaming/framebased/f/guidFormat \
+			"\\x48\\x32\\x36\\x34\\x00\\x00\\x10\\x00\\x80\\x00\\x00\\xaa\\x00\\x38\\x9b\\x71"
+
+		usb_symlink $UVC_DIR/streaming/framebased/f \
+			$UVC_DIR/streaming/header/h/f
+	fi
+
+	usb_write $UVC_DIR/streaming_maxpacket 2048
+
 	usb_symlink $UVC_DIR/control/header/h $UVC_DIR/control/class/fs/h
 	usb_symlink $UVC_DIR/control/header/h $UVC_DIR/control/class/ss/h
 
 	usb_symlink $UVC_DIR/streaming/header/h $UVC_DIR/streaming/class/fs/h
 	usb_symlink $UVC_DIR/streaming/header/h $UVC_DIR/streaming/class/hs/h
 	usb_symlink $UVC_DIR/streaming/header/h $UVC_DIR/streaming/class/ss/h
-
-	UVC_YUYV_RES=$(uvc_support_resolutions yuyv)
-	if [ -n "$UVC_YUYV_RES" ]; then
-		usb_try_symlink $UVC_DIR/streaming/uncompressed/u \
-			$UVC_DIR/streaming/header/h/u
-		cd $UVC_DIR/streaming/uncompressed/u
-
-		for res in $UVC_YUYV_RES; do
-			uvc_add_yuyv $res
-		done
-	fi
-
-	UVC_MJPEG_RES=$(uvc_support_resolutions mjpeg)
-	if [ -n "$UVC_MJPEG_RES" ]; then
-		usb_try_symlink $UVC_DIR/streaming/mjpeg/m \
-			$UVC_DIR/streaming/header/h/m
-		cd $UVC_DIR/streaming/mjpeg/m
-
-		for res in $UVC_MJPEG_RES; do
-			uvc_add_mjpeg $res
-		done
-	fi
-
-	UVC_H264_RES=$(uvc_support_resolutions h264)
-	if [ -n "$UVC_H264_RES" ]; then
-		usb_try_symlink $UVC_DIR/streaming/framebased/f \
-			$UVC_DIR/streaming/header/h/f
-		cd $UVC_DIR/streaming/framebased/f
-
-		for res in $UVC_H264_RES; do
-			uvc_add_h264 $res
-		done
-
-		usb_try_write -ne guidFormat "\\x48\\x32\\x36\\x34\\x00\\x00\\x10\\x00\\x80\\x00\\x00\\xaa\\x00\\x38\\x9b\\x71"
-	fi
 
 	# Start your UVC daemon
 	# usb_start_daemon /usr/bin/uvcd
