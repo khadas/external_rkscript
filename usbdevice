@@ -29,6 +29,7 @@ set -e
 
 TAG_DIR=/var/run/
 LOG_FILE=/var/log/usbdevice.log
+LOCK_FILE=/var/run/.usbdevice.lock
 USB_FUNCS_FILE=/var/run/.usbdevice
 
 usb_enable()
@@ -669,7 +670,8 @@ if [ "$ACTION" = update ]; then
 fi
 
 # Lock it
-exec 3<$0
+touch $LOCK_FILE
+exec 3<$LOCK_FILE
 flock -x 3
 
 if [ -z "$DEBUG" ]; then
