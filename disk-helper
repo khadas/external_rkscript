@@ -43,7 +43,7 @@ normalize_device()
 {
 	if is_rootfs; then
 		DEV_NO="$(mountpoint -d /)"
-		ROOT_DEV="$(find /sys/dev/ -name "$DEV_NO")"
+		ROOT_DEV="$(find /sys/dev/ -name "$DEV_NO" | tail -n 1)"
 		echo "/dev/$(basename "$(realpath "$ROOT_DEV")")"
 		return
 	fi
