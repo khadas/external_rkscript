@@ -534,7 +534,7 @@ usb_prepare()
 
 	# Allow function/variable overriding
 	if [ -d /etc/usbdevice.d ]; then
-		for hook in $(ls /etc/usbdevice.d/); do
+		for hook in $(find /etc/usbdevice.d/ -type f); do
 			source "$hook"
 		done
 	fi
