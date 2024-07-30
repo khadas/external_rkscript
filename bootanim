@@ -80,7 +80,7 @@ bootanim_start()
 	{
 		for t in $(seq 1 "$TIMEOUT"); do
 			# Check panel for x11 desktop
-			if pgrep panel >/dev/null; then
+			if ls -l /proc/*/exe 2>/dev/null | grep -wq panel; then
 				# Wait for panel painting
 				sleep 1
 				break
