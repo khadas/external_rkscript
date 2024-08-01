@@ -18,6 +18,16 @@
 # root@RK3588:/# more /etc/usbdevice.d/uvc.sh
 # #!/bin/sh
 # UVC_INSTANCES="uvc.0 uvc.1"
+#
+# root@rk3588:/# more /etc/usbdevice.d/rndis.sh
+# #!/bin/sh
+# rndis_post_start_hook()
+# {
+# 	while ! ifconfig usb0 >/dev/null 2>&1; do
+# 		sleep .1
+# 	done
+# 	ifconfig usb0 192.168.1.1
+# }
 
 [ -z "$DEBUG" ] || set -x
 
