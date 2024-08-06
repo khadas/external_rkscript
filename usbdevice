@@ -136,19 +136,22 @@ usb_run_stage()
 		type $f >/dev/null 2>/dev/null || continue
 
 		usb_msg "Run stage: $f"
-		eval $f || break
+		eval $f || return 1
 	done
 }
 
-usb_wait_files()
+usb_wait_access()
 {
 	for i in `seq 200`;do
-		fuser -s $@ 2>/dev/null && break
+		if fuser -s $@ 2>/dev/null; then
+			return 0
+		fi
 		sleep .01
 	done
+	return 1
 }
 
-usb_release_files()
+usb_release()
 {
 	for i in `seq 200`;do
 		fuser -s -k $@ 2>/dev/null || break
@@ -166,7 +169,7 @@ usb_mount()
 usb_umount()
 {
 	mountpoint -q $1 || return 0
-	usb_release_files -m $1
+	usb_release -m $1
 	umount $1
 }
 
@@ -261,7 +264,7 @@ adb_prepare()
 {
 	usb_mount adb /dev/usb-ffs/adb -o uid=2000,gid=2000 -t functionfs
 	usb_start_daemon /usr/bin/adbd
-	usb_wait_files -m /dev/usb-ffs/adb
+	usb_wait_access -m /dev/usb-ffs/adb
 }
 
 adb_stop()
@@ -276,7 +279,7 @@ ntb_prepare()
 {
 	usb_mount ntb /dev/usb-ffs/ntb -o uid=2000,gid=2000 -t functionfs
 	usb_start_daemon /usr/bin/ntbd
-	usb_wait_files -m /dev/usb-ffs/ntb
+	usb_wait_access -m /dev/usb-ffs/ntb
 }
 
 ntb_stop()
@@ -304,7 +307,7 @@ mtp_prepare()
 {
 	usb_mount mtp /dev/usb-ffs/mtp -o uid=2000,gid=2000 -t functionfs
 	usb_start_daemon /usr/bin/umtprd
-	usb_wait_files -m /dev/usb-ffs/mtp
+	usb_wait_access -m /dev/usb-ffs/mtp
 }
 
 mtp_stop()
@@ -570,7 +573,7 @@ usb_prepare()
 		cd $USB_GADGET_DIR
 
 		# Global initialize
-		usb_run_stage usb init
+		usb_run_stage usb init || return 1
 	fi
 
 	USB_STATE=$(cat /sys/class/android_usb/android*/state 2>/dev/null)
@@ -616,7 +619,7 @@ usb_start()
 			cd $USB_FUNCTIONS_DIR/$instance \
 				>/dev/null 2>/dev/null || continue
 
-			usb_run_stage $func prepare
+			usb_run_stage $func prepare || return 1
 
 			# Make symlink after prepared (required by UVC)
 			usb_symlink $USB_FUNCTIONS_DIR/$instance \
@@ -632,7 +635,7 @@ usb_start()
 				>/dev/null 2>/dev/null || continue
 
 			usb_msg "Starting instance: $instance"
-			usb_run_stage $func start
+			usb_run_stage $func start || return 1
 		done
 	done
 
@@ -700,8 +703,17 @@ fi
 
 case "$ACTION" in
 	start|update)
-		usb_enable
-		usb_run_stage usb start
+		for i in `seq 5`; do
+			usb_enable
+			if usb_run_stage usb start; then
+				break
+			fi
+
+			sleep 1
+			usb_msg "Retrying $ACTION request"
+			usb_disable
+			usb_run_stage usb stop
+		done
 		;;
 	stop)
 		usb_disable
