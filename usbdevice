@@ -506,6 +506,9 @@ ums_stop()
 # ---- global
 usb_init()
 {
+	# Clean it up before initializing.
+	usb_disable
+
 	usb_msg "Initializing"
 
 	cd $USB_GADGET_DIR
