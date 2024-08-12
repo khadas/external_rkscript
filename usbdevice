@@ -466,6 +466,8 @@ ums_to_pc()
 
 	if ! grep -wq "$UMS_FILE" lun.0/file; then
 		usb_umount "$UMS_MOUNTPOINT"
+
+		fsck -y "$UMS_FILE" || true
 		echo "$UMS_FILE" > lun.0/file
 	fi
 }
@@ -473,6 +475,7 @@ ums_to_pc()
 ums_to_device()
 {
 	echo > lun.0/file
+	fsck -y "$UMS_FILE" || true
 
 	[ "$UMS_MOUNT" -eq 1 ] || return 0
 
