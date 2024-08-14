@@ -484,7 +484,8 @@ ums_to_device()
 
 	# Try auto fstype firstly
 	usb_mount "$UMS_FILE" "$UMS_MOUNTPOINT" -o sync 2>/dev/null || \
-		usb_mount "$UMS_FILE" "$UMS_MOUNTPOINT" -o sync -t $UMS_FSTYPE
+		usb_mount "$UMS_FILE" "$UMS_MOUNTPOINT" -o sync -t $UMS_FSTYPE || \
+		usb_mount "$UMS_FILE" "$UMS_MOUNTPOINT" -o sync,loop -t $UMS_FSTYPE || \
 }
 
 ums_start()
