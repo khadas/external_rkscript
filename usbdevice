@@ -583,7 +583,7 @@ usb_prepare()
 	fi
 
 	# Update USB PID
-	usb_pid > $USB_GADGET_DIR/idProduct
+	printf "0x%x" ${USB_PRODUCT_ID:-$(usb_pid)} > $USB_GADGET_DIR/idProduct
 }
 
 usb_start()
